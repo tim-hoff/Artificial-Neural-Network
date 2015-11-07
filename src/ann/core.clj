@@ -14,7 +14,7 @@
 (require '[incanter.stats :as stat]); stats
 (require '[incanter.charts :as chart]); charts
 (require '[incanter.io :as iio]); csv
-(set! *warn-on-reflection* true)
+(set! *warn-on-reflection* true) 
 
 (defn gen-matrix
   "generates a `r` by `c` matrix with random weights between -1 and 1."
@@ -63,12 +63,12 @@
 
 (defn forward
   "takes in weights `w and inputs `x and propagates the inputs though the network"
-  [x w]
-  (loop [acc x weights w]
+  [input w]
+  (loop [x input weights w]
     (if (empty? weights)
-      acc
+      x
       (recur 
-         (mmap sigmoid (dot acc (first weights)))
+         (mmap sigmoid (dot x (first weights))) ; first weights -> weights in this later so
          (rest weights)))))
 
 (defn cost
@@ -86,9 +86,9 @@
 
 
 (defn feed
-  "returns adjusted weights, takes in your inputs, weights, and output"
-  [x w y]
-  (let [yhat (foward x w)]
+  "returns adjusted weights, takes in your inputs, weights, and actual output, learning weight"
+  [x w y lr]
+  (let [yhat (forward x w)]
     
     ))
 
@@ -114,7 +114,7 @@
   (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") 0 1)))]
     (into [] (conj (pop row) (if (= (peek row) "F") 0 1)))))
 
-(def crabv (map scrub crab2))
+(def crabv (mapv scrub crab2))
 
 ; (i/view crab1)
 
