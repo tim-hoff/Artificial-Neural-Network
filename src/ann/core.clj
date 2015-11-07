@@ -84,6 +84,14 @@
   (i/conj-cols (i/sel dataset :except-cols column)
              (i/$map fn column dataset)))
 
+
+(defn feed
+  "returns adjusted weights, takes in your inputs, weights, and output"
+  [x w y]
+  (let [yhat (foward x w)]
+    
+    ))
+
 ; test matrixes
 (def x  [[1  8.1   6.7   16.1  19    7    1]
          ; [1  8.8   7.7   18.1  20.8  7.4  1]
@@ -98,7 +106,16 @@
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 (def crab1 (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
-(def crabv (i/to-vect crab1))
+(def crab2 (i/to-vect crab1))
+
+(defn scrub 
+  "scrubs the first and last attribute, species and gender respectivly"
+  [crabs]
+  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") 0 1)))]
+    (into [] (conj (pop row) (if (= (peek row) "F") 0 1)))))
+
+(def crabv (map scrub crab2))
+
 ; (i/view crab1)
 
 (println fwd)
