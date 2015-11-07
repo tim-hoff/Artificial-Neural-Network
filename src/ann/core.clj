@@ -16,17 +16,17 @@
 (require '[incanter.io :as iio]); csv
 (set! *warn-on-reflection* true) 
 
+(defn l2v
+  "convert list to vector matrix"
+  [matrix]
+  (mapv #(into [] %) matrix))
+
 (defn gen-matrix
   "generates a `r` by `c` matrix with random weights between -1 and 1."
 	[r c & m]
 	(for [_ (take r (range))] 
    (for [_ (take c (range))] 
      (* (if (< 0.5 (rand)) -1 1) (rand)))))
-
-(defn l2v
-  "convert list to vector matrix"
-  [matrix]
-  (mapv #(into [] %) matrix))
 
 (defn weight-gen 
   "generates a multitiered matrix"
@@ -76,33 +76,30 @@
   [y yhat]
   (* 0.5 (Math/pow (- y yhat) 2)))
 
-(defn mapw
-  [function data]
-  (mapv #(into [] (function %)) data))
-
-(defn map-data [dataset column fn]
-  (i/conj-cols (i/sel dataset :except-cols column)
-             (i/$map fn column dataset)))
-
+(defn printfeed
+  "prints feed information"
+  [x w z lr yhat y xt]
+  (println "x") (pm x)
+  (println "w") (pm w)
+  (println "z") (pm z)
+  (println "lr\n" lr)
+  (println "yhat") (pm yhat)
+  (println "y") (pm y)
+  (println "xt") (pm xt)
+  )
 
 (defn feed
-  "returns adjusted weights, takes in your inputs, weights, and actual output, learning weight"
+  "feeds data into nn and returns adjusted weights"
   [x w y lr]
-  (let [yhat (forward x w)]
+  (let [z (dot x w)
+        yhat (mmap sigmoid z)
+        xt (transpose x)
+        ycost (* -1 (- y yhat))
+        
+        delta-w (* ycost xt)]
+    (printfeed x w z lr yhat y xt) ; print variables for fact checking
     
     ))
-
-; test matrixes
-(def x  [[1  8.1   6.7   16.1  19    7    1]
-         ; [1  8.8   7.7   18.1  20.8  7.4  1]
-         ; [1  14.9  13.2  30.1  35.6  12  -1]
-         ; [1  15    13.8  31.7  36.9  14  -1]
-         ])
-(def y (mapv #(vector %) (map peek x)))
-(def xx (mapw pop x))
-(def nx (norm-scale xx))
-(def w (weight-gen `(6 1)))
-(def fwd (forward nx w))
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 (def crab1 (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
@@ -111,15 +108,18 @@
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
   [crabs]
-  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") 0 1)))]
+  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") -1 1)))]
     (into [] (conj (pop row) (if (= (peek row) "F") 0 1)))))
 
 (def crabv (mapv scrub crab2))
 
-; (i/view crab1)
-
-(println fwd)
-(println y)
+; test matrixes
+(def x  (into [] (take 1 crabv)))
+(def y (mapv #(vector %) (map peek x)))
+(def lr (+ 0 0.1))
+(def nx (norm-scale (mapw pop x)))
+(def w (first (weight-gen `(6 1))))
+(feed nx w y lr)
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
