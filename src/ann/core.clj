@@ -117,14 +117,44 @@
   `input` assumes y values are at the end of the vectors"
   [input weight learnrate]
   (loop [x input w weight]
-    (println "weights - ") (pm w)
-    (println "x"(count x)"-" (peek x))
+    ; (println "weights - ") (pm w)
+    ; (println "x"(count x)"-" (peek x))
     (if (every? empty? x)
       w
       (recur (pop x) (let [thisx (peek x)
                            in [(pop thisx)]
                            out (peek thisx) ] 
                        (adjust-weights in w out learnrate))))))
+
+(defn feed-one 
+  [x w]
+  (let [z (pluck first (dot x w))
+        yhat (sigmoid z)]
+  yhat
+  ))
+
+(defn finderr
+  [value theta match]
+  (let [out (if (> value theta) 1.0 0.0)]
+    ; (println "value" value "theta" theta "out" out "match" match)
+    (if (= out match) 0.0 1.0))
+  )
+
+(defn errorcheck
+  "checks error given `inputs` `weights` `threshold`"
+  [input weight threshold]
+  (loop [in input er 0.0]
+    (if (every? empty? in)
+      er
+      (recur 
+        (pop in)
+        (let [row (peek in)
+              x [(pop row)]
+              y (peek row)
+              yhat (feed-one x weight)]
+          (+ er (finderr yhat threshold y)))))))
+
+
 
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
@@ -134,21 +164,17 @@
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
   [crabs]
-  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") -1 1)))]
-    (into [] (conj (pop row) (if (= (peek row) "F") 0 1)))))
+  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") -1.0 1.0)))]
+    (into [] (conj (pop row) (if (= (peek row) "F") 0.0 1.0)))))
 
-(def crabv (mapv scrub crab2))
-(def f (into [] (take 5 crabv)))
+(def crabv (norm-scale (mapv scrub crab2)))
 
 ; test matrixes
 (def y (pluck peek crabv))
-(def oox (norm-scale (mapv pop crabv)))
-(def x  (into [] (take 1 oox)))
-
-(def lr (+ 0 0.1))
 (def w (first (weight-gen `(6 1))))
-(adjust-weights x w y lr)
 
+(def w2 (feed crabv w 0.1))
+(println (errorcheck crabv w2 0.5))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
