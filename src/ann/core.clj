@@ -7,14 +7,13 @@
 (require '[clojure.core.matrix.operators :as mop]); matrix operations
 (set-current-implementation :vectorz); matrix computations
 (require '[clojure.java.io :as io]) ;io resources
-
 (require '[incanter.core :as i]); statistics library
 (require '[incanter.datasets :as ds]) ;  datasets, get-dataset
 (require '[incanter.excel :as xls]); excel
 (require '[incanter.stats :as stat]); stats
 (require '[incanter.charts :as chart]); charts
 (require '[incanter.io :as iio]); csv
-(set! *warn-on-reflection* true) 
+(set! *warn-on-reflection* true)
 
 (defn l2v
   "convert list to vector matrix"
@@ -81,19 +80,8 @@
   [fn matrix]
   (fn (first matrix)))
 
-(defn feed
-  "feeds data into nn and returns adjusted weights"
-  [x w y lr]
-  (let [z (pluck first (dot x w))
-        yhat (sigmoid z)
-        xt (transpose x); [[x1 x2 x3]] to [[x1] [x2] [x3]]
-        ycost (* -1 (- y yhat)); -(y-yhat)
-        enz (Math/exp (* -1 z)); e^(-z)
-        sigmoid-prime (/ enz (Math/pow (+ 1 enz) 2)); enz/(1+enz)^2
-        delta-w (mmap #(* (* ycost sigmoid-prime) %) xt)
-        
-        ]
-    
+(defn printfd
+  [x w y lr z yhat xt ycost enz sigmoid-prime delta-w lrdw]
     (ppm "x" x)
     (ppm "w" w)
     (ppm "y" y)
@@ -105,7 +93,39 @@
     (ppm "enz" enz)
     (ppm "sigmoid-prime" sigmoid-prime)
     (ppm "delta-w" delta-w)
-    ))
+    (ppm "lrdw" lrdw)
+    (println "..."))
+
+(defn adjust-weights
+  "feeds data into nn and returns adjusted weights"
+  [x w y lr]
+  (let [z (pluck first (dot x w))
+        yhat (sigmoid z)
+        xt (transpose x); [[x1 x2 x3]] to [[x1] [x2] [x3]]
+        ycost (* -1 (- y yhat)); -(y-yhat)
+        enz (Math/exp (* -1 z)); e^(-z)
+        sigmoid-prime (/ enz (Math/pow (+ 1 enz) 2)); enz/(1+enz)^2
+        delta-w (mmap #(* (* ycost sigmoid-prime) %) xt)
+        lrdw (mmap #(* % lr) delta-w)
+        wkp1 (i/minus w lrdw)]
+    ; (printfd x w y lr z yhat xt ycost enz sigmoid-prime delta-w lrdw)
+    wkp1
+))
+
+(defn feed
+  "loops across input and adjustes the weights for all of it. 
+  `input` assumes y values are at the end of the vectors"
+  [input weight learnrate]
+  (loop [x input w weight]
+    (println "weights - ") (pm w)
+    (println "x"(count x)"-" (peek x))
+    (if (every? empty? x)
+      w
+      (recur (pop x) (let [thisx (peek x)
+                           in [(pop thisx)]
+                           out (peek thisx) ] 
+                       (adjust-weights in w out learnrate))))))
+
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 (def crab1 (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
@@ -118,18 +138,17 @@
     (into [] (conj (pop row) (if (= (peek row) "F") 0 1)))))
 
 (def crabv (mapv scrub crab2))
+(def f (into [] (take 5 crabv)))
 
 ; test matrixes
+(def y (pluck peek crabv))
 (def oox (norm-scale (mapv pop crabv)))
 (def x  (into [] (take 1 oox)))
-(def y (pluck peek x))
+
 (def lr (+ 0 0.1))
 (def w (first (weight-gen `(6 1))))
+(adjust-weights x w y lr)
 
-(feed x w y lr)
-(def z (pluck first (dot x w)))
-(def yhat (sigmoid z))
-(def xt (transpose x))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
