@@ -52,9 +52,9 @@
     (mapv #(mapv / % mx) lst)))
 
 (defn sigmoid
-  "takes in `t` and throws it in the sigmoid function\n"
-  [t]
-  (/ 1 (+ 1 (Math/exp (* -1 t)))))
+  "takes in `z` and throws it in the sigmoid function\n"
+  [z]
+  (/ 1 (+ 1 (Math/exp (* -1 z)))))
 
 (defn mmap
   "maps a function on a weight vector matrix"
@@ -71,34 +71,40 @@
          (mmap sigmoid (dot x (first weights))) ; first weights -> weights in this later so
          (rest weights)))))
 
-(defn cost
-  "calculates cost"
-  [y yhat]
-  (* 0.5 (Math/pow (- y yhat) 2)))
-
-(defn printfeed
+(defn ppm
   "prints feed information"
-  [x w z lr yhat y xt]
-  (println "x") (pm x)
-  (println "w") (pm w)
-  (println "z") (pm z)
-  (println "lr\n" lr)
-  (println "yhat") (pm yhat)
-  (println "y") (pm y)
-  (println "xt") (pm xt)
-  )
+  [st info]
+  (println st) (pm info))
+
+(defn pluck
+  "extract a value from nexted matrix"
+  [fn matrix]
+  (fn (first matrix)))
 
 (defn feed
   "feeds data into nn and returns adjusted weights"
   [x w y lr]
-  (let [z (dot x w)
-        yhat (mmap sigmoid z)
-        xt (transpose x)
-        ycost (* -1 (- y yhat))
+  (let [z (pluck first (dot x w))
+        yhat (sigmoid z)
+        xt (transpose x); [[x1 x2 x3]] to [[x1] [x2] [x3]]
+        ycost (* -1 (- y yhat)); -(y-yhat)
+        enz (Math/exp (* -1 z)); e^(-z)
+        sigmoid-prime (/ enz (Math/pow (+ 1 enz) 2)); enz/(1+enz)^2
+        delta-w (mmap #(* (* ycost sigmoid-prime) %) xt)
         
-        delta-w (* ycost xt)]
-    (printfeed x w z lr yhat y xt) ; print variables for fact checking
+        ]
     
+    (ppm "x" x)
+    (ppm "w" w)
+    (ppm "y" y)
+    (ppm "lr" lr)
+    (ppm "z" z)
+    (ppm "yhat" yhat)
+    (ppm "xt" xt)
+    (ppm "ycost" ycost)
+    (ppm "enz" enz)
+    (ppm "sigmoid-prime" sigmoid-prime)
+    (ppm "delta-w" delta-w)
     ))
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
@@ -114,12 +120,16 @@
 (def crabv (mapv scrub crab2))
 
 ; test matrixes
-(def x  (into [] (take 1 crabv)))
-(def y (mapv #(vector %) (map peek x)))
+(def oox (norm-scale (mapv pop crabv)))
+(def x  (into [] (take 1 oox)))
+(def y (pluck peek x))
 (def lr (+ 0 0.1))
-(def nx (norm-scale (mapw pop x)))
 (def w (first (weight-gen `(6 1))))
-(feed nx w y lr)
+
+(feed x w y lr)
+(def z (pluck first (dot x w)))
+(def yhat (sigmoid z))
+(def xt (transpose x))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
