@@ -154,8 +154,14 @@
               yhat (feed-one x weight)]
           (+ er (finderr yhat threshold y)))))))
 
-
-
+(defn errloop
+  [mn mx step]
+  (loop [m mn acc []]
+    (if (> m mx)
+      acc
+      (recur (+ step m) 
+             (conj acc [m (errorcheck crabv aw m)]))
+      )))
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 (def crab1 (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
@@ -164,16 +170,16 @@
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
   [crabs]
-  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") -1.0 1.0)))]
+  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") 1.0 -1.0)))]
     (into [] (conj (pop row) (if (= (peek row) "F") 0.0 1.0)))))
 
 (def crabv (norm-scale (mapv scrub crab2)))
 
-; test matrixes
 (def y (pluck peek crabv))
 (def w (first (weight-gen `(6 1))))
-
 (def w2 (feed crabv w 0.1))
+(def aw [[0.4774669858216217] [3.7274708410953905] [-41.521543630740595] [16.74636609418579] [10.3777359639818] [11.983562065333414]])
+
 (println (errorcheck crabv w2 0.5))
 
 (defn -main
