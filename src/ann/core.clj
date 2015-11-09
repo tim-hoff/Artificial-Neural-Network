@@ -52,7 +52,7 @@
 (defn sigmoid
   "takes in `z` and throws it in the sigmoid function\n"
   [z]
-  (/ 1 (+ 1 (Math/exp (* -1 z)))))
+    (/ 1 (+ 1 (Math/exp (* -1 z)))))
 
 (defn mmap
   "maps a function on a weight vector matrix"
@@ -126,14 +126,12 @@
   [x w]
   (let [z (pluck first (dot x w))
         yhat (sigmoid z)]
-  yhat
-  ))
+    yhat))
 
 (defn finderr
   [value theta match]
   (let [out (if (> value theta) 1.0 0.0)]
-    (if (= out match) 0.0 1.0))
-  )
+    (if (= out match) 0.0 1.0)))
 
 (defn errorcheck
   "checks error given `inputs` `weights` `threshold`"
