@@ -16,6 +16,10 @@
 (require '[incanter.io :as iio]); csv
 (set! *warn-on-reflection* true)
 
+(def crab 
+  "unchanged dataset" 
+  (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
+
 (defn l2v
   "convert list to vector matrix"
   [matrix]
@@ -87,10 +91,7 @@
         delta-w (mmap #(* (* ycost sigmoid-prime) %) xt)
         lrdw (mmap #(* % lr) delta-w)
         wkp1 (i/minus w lrdw)]
-    wkp1
-))
-
-
+    wkp1))
 
 (defn feed
   "loops across input and adjustes the weights for all of it. 
@@ -166,23 +167,6 @@
         w2 (refeed dt w lrs)]
      w2))
 
-(defn bestset 
-  [sets]
-  (loop [acc [] bs sets]
-    (println "sets left -" (count bs))
-    (if (empty? bs)
-      acc
-      (let [attributes (conj (first bs) :sex)
-            ds1 (i/$ attributes crab)
-            dsv (i/to-vect ds1)
-            dss (norm-scale (mapv scrub dsv))
-            lst (concat (list (- (count (first dss)) 1)) (list 1))
-            wi (nifty-feeder dss 200 [0.01] lst)
-            e1 (error-check dss wi 0.41)
-            e2 (error-check dss wi 0.5)
-            ]
-        (recur (conj acc [(first e1) (first e2) attributes]) (rest bs))))))
-
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
   [data]
@@ -195,14 +179,26 @@
         row (into [] (concat [species] (conj mid gender)))]
     row))
 
-(def crab 
-  "unchanged dataset" 
-  (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
-
+(defn bestset 
+  [sets]
+  (loop [acc (transient []) bs sets]
+    (println "sets left -" (count bs))
+    (if (empty? bs)
+      (persistent! acc)
+      (let [attributes (conj (first bs) :sex)
+            ds1 (i/$ attributes crab)
+            dsv (i/to-vect ds1)
+            dss (norm-scale (mapv scrub dsv))
+            lst (concat (list (- (count (first dss)) 1)) (list 1))
+            wi (nifty-feeder dss 180 [0.12 0.06 0.01] lst)
+            e1 (error-check dss wi 0.5)
+            e2 (error-check dss wi 0.41)
+            ]
+        (recur (conj! acc [(first e1) (first e2) attributes]) (rest bs))))))
 
 (def crab1 
   "reordered dataset" 
-  (i/$  [:sp :RW :CL :CW :sex] crab))
+  (i/$  [:RW :CL :CW :sex] crab))
 
 (def crab2 
   "vector version, reordered dataset" 
@@ -219,19 +215,17 @@
 
 (def w
   "adjusted weights for crabv with nifty-feeder"
-   (nifty-feeder crabv 200 [0.01] (cnt)))
+   (nifty-feeder crabv 200 [0.1 0.05 0.01] (cnt)))
 
 (let [ec (error-check crabv w 0.41)
       er (first ec)
       ac (last ec)
       ec2 (error-check crabv w 0.5)
       er2 (first ec2)
-      ac2 (last ec2)   ]
+      ac2 (last ec2)]
   
   (println "Error -" er "," er2 (if (< er2 er) "!!!!!!!!!!" ""))
   (println "Err % -" (* 100.0 (/ er 200.0))))
-
-(def bsd (bestset ssets))
 
 
 (defn -main
