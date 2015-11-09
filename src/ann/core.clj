@@ -41,7 +41,6 @@
   (loop [acc (transient []) t lst]
     (if (every? empty? t)
       (rseq (persistent! acc))
-      ; (recur (conj! acc (apply max (map peek t))) (map pop t)))))
       (recur (conj! acc (apply max (map abs (map peek t)))) (map pop t))))); handle scaling for negative attributes
 
 (defn norm-scale
@@ -108,7 +107,6 @@
         delta-w (mmap #(* (* ycost sigmoid-prime) %) xt)
         lrdw (mmap #(* % lr) delta-w)
         wkp1 (i/minus w lrdw)]
-    ; (printfd x w y lr z yhat xt ycost enz sigmoid-prime delta-w lrdw)
     wkp1
 ))
 
@@ -117,8 +115,6 @@
   `input` assumes y values are at the end of the vectors"
   [input weight learnrate]
   (loop [x input w weight]
-    ; (println "weights - ") (pm w)
-    ; (println "x"(count x)"-" (peek x))
     (if (every? empty? x)
       w
       (recur (pop x) (let [thisx (peek x)
@@ -136,7 +132,6 @@
 (defn finderr
   [value theta match]
   (let [out (if (> value theta) 1.0 0.0)]
-    ; (println "value" value "theta" theta "out" out "match" match)
     (if (= out match) 0.0 1.0))
   )
 
@@ -155,13 +150,12 @@
           (+ er (finderr yhat threshold y)))))))
 
 (defn errloop
-  [mn mx step weight ]
+  [mn mx step data weight ]
   (loop [m mn acc []]
     (if (>= m mx)
       acc
       (recur (+ step m) 
-             (conj acc [m (errorcheck crabv w2 m)]))
-      )))
+             (conj acc [m (errorcheck data weight m)])))))
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 (def crab1 (i/$ [:sp :index :FL :RW :CL :CW :BD :sex] crab))
@@ -178,31 +172,22 @@
 (def y (pluck peek crabv))
 (def w (first (weight-gen `(7 1))))
 
-(def crabv2 (shuffle (shuffle (into [] (concat 
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                )))))
+(defn bigify
+  "expands the dataset for testing"
+  [dataset magnitude]
+  (loop [ds dataset m (- magnitude 1)]
+    (if (= m 0)
+      (shuffle (shuffle ds))
+      (recur (into [] (concat ds dataset)) (- m 1) ))))
+
+(def crabv2 (shuffle (shuffle (bigify crabv 160))))
 
 (def w2 (feed crabv2 w 0.1))
-(def w3 (feed crabv2 w2 0.1))
-(def w4  (feed crabv2 w3 0.1))
+(def w3 (feed crabv2 w2 0.05))
+(def w4  (feed crabv2 w3 0.01))
 
-(def wz [[0.252673540652069] [-2.4166590593876145] [3.095142265894501] [-22.964912553504696] [8.910733960205627] [5.117824206109415] [6.579287010853545]])
 (println (errorcheck crabv w4 0.5))
+(pm (errloop 0.49 0.51 0.0001 crabv w4))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
