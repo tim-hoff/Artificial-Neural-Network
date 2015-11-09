@@ -4,6 +4,8 @@
 (use 'clojure.repl) ; for doc
 (use 'criterium.core) ; benchmarking
 (use 'clojure.core.matrix) ; math
+(use 'clojure.math.combinatorics) ; math
+
 (set-current-implementation :vectorz); matrix computations
 (require '[clojure.java.io :as io]); io resources
 (require '[incanter.core :as i]); statistics library
@@ -88,6 +90,8 @@
     wkp1
 ))
 
+
+
 (defn feed
   "loops across input and adjustes the weights for all of it. 
   `input` assumes y values are at the end of the vectors"
@@ -116,16 +120,18 @@
 (defn error-check
   "checks error given `inputs` `weights` `threshold`"
   [input weight threshold]
-  (loop [in input er 0.0]
+  (loop [in input er 0.0 acc []]
     (if (every? empty? in)
-      er
-      (recur 
-        (pop in)
-        (let [row (peek in)
-              x [(pop row)]
-              y (peek row)
-              yhat (feed-one x weight)]
-          (+ er (find-error yhat threshold y)))))))
+      [er acc]
+      (let [row (peek in)
+            x [(pop row)]
+            y (peek row)
+            yhat (feed-one x weight)
+            fr (find-error yhat threshold y)]
+        (recur 
+          (pop in)
+          (+ er fr)
+          (if (= 1.0 fr) (conj acc [y yhat]) acc))))))
 
 (defn error-loop
   "step between min and max and error-check to examine outliers."
@@ -134,7 +140,7 @@
     (if (>= m mx)
       acc
       (recur (+ step m) 
-             (conj acc [m (error-check data weight m)])))))
+             (conj acc [m (first (error-check data weight m))])))))
 
 (defn expand
   "expands the dataset for testing"
@@ -160,6 +166,23 @@
         w2 (refeed dt w lrs)]
      w2))
 
+(defn bestset 
+  [sets]
+  (loop [acc [] bs sets]
+    (println "sets left -" (count bs))
+    (if (empty? bs)
+      acc
+      (let [attributes (conj (first bs) :sex)
+            ds1 (i/$ attributes crab)
+            dsv (i/to-vect ds1)
+            dss (norm-scale (mapv scrub dsv))
+            lst (concat (list (- (count (first dss)) 1)) (list 1))
+            wi (nifty-feeder dss 200 [0.01] lst)
+            e1 (error-check dss wi 0.41)
+            e2 (error-check dss wi 0.5)
+            ]
+        (recur (conj acc [(first e1) (first e2) attributes]) (rest bs))))))
+
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
   [data]
@@ -179,7 +202,7 @@
 
 (def crab1 
   "reordered dataset" 
-  (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
+  (i/$  [:sp :RW :CL :CW :sex] crab))
 
 (def crab2 
   "vector version, reordered dataset" 
@@ -192,16 +215,23 @@
 (defn cnt [] 
   (concat (list (- (count (first crabv)) 1)) (list 1)))
 
+(def ssets (into [] (rest (mapv #(into [] %) (subsets [:sp :FL :RW :CL :CW :BD])))))
+
 (def w
   "adjusted weights for crabv with nifty-feeder"
-   (nifty-feeder crabv 100 [0.2 0.1 0.01] (cnt)))
+   (nifty-feeder crabv 200 [0.01] (cnt)))
 
-(pm (error-loop 0.3 0.6 0.01 crabv w))
-
-(let [er (error-check crabv w 0.41)
-      er2 (error-check crabv w 0.5) ]
+(let [ec (error-check crabv w 0.41)
+      er (first ec)
+      ac (last ec)
+      ec2 (error-check crabv w 0.5)
+      er2 (first ec2)
+      ac2 (last ec2)   ]
+  
   (println "Error -" er "," er2 (if (< er2 er) "!!!!!!!!!!" ""))
   (println "Err % -" (* 100.0 (/ er 200.0))))
+
+(def bsd (bestset ssets))
 
 
 (defn -main
