@@ -79,22 +79,6 @@
   [fn matrix]
   (fn (first matrix)))
 
-(defn printfd
-  [x w y lr z yhat xt ycost enz sigmoid-prime delta-w lrdw]
-    (ppm "x" x)
-    (ppm "w" w)
-    (ppm "y" y)
-    (ppm "lr" lr)
-    (ppm "z" z)
-    (ppm "yhat" yhat)
-    (ppm "xt" xt)
-    (ppm "ycost" ycost)
-    (ppm "enz" enz)
-    (ppm "sigmoid-prime" sigmoid-prime)
-    (ppm "delta-w" delta-w)
-    (ppm "lrdw" lrdw)
-    (println "..."))
-
 (defn adjust-weights
   "feeds data into nn and returns adjusted weights"
   [x w y lr]
@@ -128,7 +112,7 @@
         yhat (sigmoid z)]
     yhat))
 
-(defn finderr
+(defn find-error
   [value theta match]
   (let [out (if (> value theta) 1.0 0.0)]
     (if (= out match) 0.0 1.0)))
@@ -145,9 +129,9 @@
               x [(pop row)]
               y (peek row)
               yhat (feed-one x weight)]
-          (+ er (finderr yhat threshold y)))))))
+          (+ er (find-error yhat threshold y)))))))
 
-(defn errloop
+(defn error-loop
   [mn mx step data weight ]
   (loop [m mn acc []]
     (if (>= m mx)
@@ -155,22 +139,13 @@
       (recur (+ step m) 
              (conj acc [m (errorcheck data weight m)])))))
 
-(def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
-(def crab1 (i/$ [:sp :index :FL :RW :CL :CW :BD :sex] crab))
-(def crab2 (i/to-vect crab1))
-
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
   [crabs]
   (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") 1.0 -1.0)))]
     (into [] (conj (pop row) (if (= (peek row) "F") 0.0 1.0)))))
 
-(def crabv (norm-scale (mapv scrub crab2)))
-
-(def y (pluck peek crabv))
-(def w (first (weight-gen `(7 1))))
-
-(defn bigify
+(defn expand
   "expands the dataset for testing"
   [dataset magnitude]
   (loop [ds dataset m (- magnitude 1)]
@@ -178,14 +153,25 @@
       (shuffle (shuffle ds))
       (recur (into [] (concat ds dataset)) (- m 1) ))))
 
-(def crabv2 (shuffle (shuffle (bigify crabv 160))))
+(defn refeed 
+  [data weight lr-vect]
+  (loop [w weight lr lr-vect ]
+    (if (empty? lr)
+      w
+      (recur (feed data w (first lr)) (rest lr)))))
 
-(def w2 (feed crabv2 w 0.1))
-(def w3 (feed crabv2 w2 0.05))
-(def w4  (feed crabv2 w3 0.01))
+(def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
+(def crab1 (i/$ [:sp :index :FL :RW :CL :CW :BD :sex] crab))
+(def crab2 (i/to-vect crab1))
 
-(println (errorcheck crabv w4 0.5))
-(pm (errloop 0.49 0.51 0.0001 crabv w4))
+(def crabv (norm-scale (mapv scrub crab2)))
+(def crabv2 (shuffle (shuffle (expand crabv 160))))
+
+(def w (first (weight-gen `(7 1))))
+(def w2 (refeed crabv2 w [0.2 0.1 0.05 0.025 0.01]))
+
+(println (errorcheck crabv w2 0.5))
+(pm (error-loop 0.49 0.51 0.0001 crabv w2))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
