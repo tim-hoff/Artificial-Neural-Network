@@ -4,7 +4,6 @@
 (use 'clojure.repl) ; for doc
 (use 'criterium.core) ; benchmarking
 (use 'clojure.core.matrix) ; math
-(require '[clojure.core.matrix.operators :as mop]); matrix operations
 (set-current-implementation :vectorz); matrix computations
 (require '[clojure.java.io :as io]) ;io resources
 (require '[incanter.core :as i]); statistics library
@@ -202,7 +201,7 @@
 (let [er (error-check crabv w 0.41)
       er2 (error-check crabv w 0.5) ]
   (println "Error -" er "," er2 (if (< er2 er) "!!!!!!!!!!" ""))
-  (println "Err % -" (* 100.0 (/ er 250.0))))
+  (println "Err % -" (* 100.0 (/ er 200.0))))
 
 
 (defn -main
