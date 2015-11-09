@@ -189,8 +189,7 @@
   "scaled vector dataset" 
   (norm-scale (mapv scrub crab2)))
 
-(defn cnt 
-  [] 
+(defn cnt [] 
   (concat (list (- (count (first crabv)) 1)) (list 1)))
 
 (def w
@@ -200,8 +199,7 @@
 (pm (error-loop 0.3 0.6 0.01 crabv w))
 
 (let [er (error-check crabv w 0.41)
-      er2 (error-check crabv w 0.5)
-      ]
+      er2 (error-check crabv w 0.5) ]
   (println "Error -" er "," er2 (if (< er2 er) "!!!!!!!!!!" ""))
   (println "Err % -" (* 100.0 (/ er 250.0))))
 
