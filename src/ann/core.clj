@@ -195,13 +195,13 @@
                                 crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
                                 crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
                                 crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
-                                      )))))
+                                )))))
 
 (def w2 (feed crabv2 w 0.1))
 (def w3 (feed crabv2 w2 0.1))
 (def w4  (feed crabv2 w3 0.1))
 
-
+(def wz [[0.252673540652069] [-2.4166590593876145] [3.095142265894501] [-22.964912553504696] [8.910733960205627] [5.117824206109415] [6.579287010853545]])
 (println (errorcheck crabv w4 0.5))
 
 (defn -main
