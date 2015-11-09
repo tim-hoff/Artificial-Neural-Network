@@ -137,15 +137,6 @@
       (recur (+ step m) 
              (conj acc [m (error-check data weight m)])))))
 
-(defn scrub 
-  "scrubs the first and last attribute, species and gender respectivly"
-  [data]
-  (let [mid (pop (into [] (rest data)))
-        gender (if (= (peek data) "F") 0.0 1.0)
-        species (if (= (first data) "B") 1.0 -1.0)
-        row (into [] (concat [species] (conj mid gender)))]
-    row))
-
 (defn expand
   "expands the dataset for testing"
   [dataset magnitude]
@@ -168,8 +159,19 @@
   (let [dt (expand data magnitude)
         w (first (weight-gen size))
         w2 (refeed dt w lrs)]
-     w2
-     ))
+     w2))
+
+(defn scrub 
+  "scrubs the first and last attribute, species and gender respectivly"
+  [data]
+  (let [mid (pop (into [] (rest data)))
+        gender (if (= (peek data) "F") 0.0 1.0)
+        s (first data)
+        species (if (= s "B") 1.0 
+                  (if (= s "O") -1.0 ; just in case we remove this column 
+                    s))
+        row (into [] (concat [species] (conj mid gender)))]
+    row))
 
 (def crab 
   "unchanged dataset" 
@@ -193,8 +195,10 @@
 
 (pm (error-loop 0.3 0.6 0.01 crabv w))
 
-(let [er (error-check crabv w 0.5)]
-  (println "Error -" er)
+(let [er (error-check crabv w 0.41)
+      er2 (error-check crabv w 0.5)
+      ]
+  (println "Error -" er "," er2 (if (< er2 er) "!!!!!!!!!!" ""))
   (println "Err % -" (* 100.0 (/ er 250.0))))
 
 
