@@ -5,7 +5,7 @@
 (use 'criterium.core) ; benchmarking
 (use 'clojure.core.matrix) ; math
 (set-current-implementation :vectorz); matrix computations
-(require '[clojure.java.io :as io]) ;io resources
+(require '[clojure.java.io :as io]); io resources
 (require '[incanter.core :as i]); statistics library
 (require '[incanter.datasets :as ds]) ;  datasets, get-dataset
 (require '[incanter.excel :as xls]); excel
