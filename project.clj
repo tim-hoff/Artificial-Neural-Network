@@ -9,6 +9,7 @@
                 [net.mikera/vectorz-clj "0.36.0"]
 								[net.mikera/core.matrix "0.42.1"]
         				[incanter/incanter "1.9.0"]]
+  :plugins [[lein-codox "0.9.0"]]
   :main ^:skip-aot ann.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}

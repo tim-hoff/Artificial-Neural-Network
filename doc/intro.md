@@ -1,3 +1,1 @@
-# Introduction to ann
-
-TODO: write [great documentation](http://jacobian.org/writing/what-to-write/)
+# Artificial Neural Networks with Stochastic gradient descent

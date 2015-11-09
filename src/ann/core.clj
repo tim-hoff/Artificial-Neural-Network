@@ -109,6 +109,7 @@
     yhat))
 
 (defn find-error
+  "find the error given a `value` and `theta` and if is what we expect to `match`"
   [value theta match]
   (let [out (if (> value theta) 1.0 0.0)]
     (if (= out match) 0.0 1.0)))
@@ -134,7 +135,7 @@
     (if (>= m mx)
       acc
       (recur (+ step m) 
-             (conj acc [m (errorcheck data weight m)])))))
+             (conj acc [m (error-check data weight m)])))))
 
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
