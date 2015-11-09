@@ -155,16 +155,16 @@
           (+ er (finderr yhat threshold y)))))))
 
 (defn errloop
-  [mn mx step]
+  [mn mx step weight ]
   (loop [m mn acc []]
-    (if (> m mx)
+    (if (>= m mx)
       acc
       (recur (+ step m) 
-             (conj acc [m (errorcheck crabv aw m)]))
+             (conj acc [m (errorcheck crabv w2 m)]))
       )))
 
 (def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
-(def crab1 (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
+(def crab1 (i/$ [:sp :index :FL :RW :CL :CW :BD :sex] crab))
 (def crab2 (i/to-vect crab1))
 
 (defn scrub 
@@ -176,11 +176,33 @@
 (def crabv (norm-scale (mapv scrub crab2)))
 
 (def y (pluck peek crabv))
-(def w (first (weight-gen `(6 1))))
-(def w2 (feed crabv w 0.1))
-(def aw [[0.4774669858216217] [3.7274708410953905] [-41.521543630740595] [16.74636609418579] [10.3777359639818] [11.983562065333414]])
+(def w (first (weight-gen `(7 1))))
 
-(println (errorcheck crabv w2 0.5))
+(def crabv2 (shuffle (shuffle (into [] (concat 
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                crabv crabv crabv crabv crabv crabv crabv crabv crabv crabv
+                                      )))))
+
+(def w2 (feed crabv2 w 0.1))
+(def w3 (feed crabv2 w2 0.1))
+(def w4  (feed crabv2 w3 0.1))
+
+
+(println (errorcheck crabv w4 0.5))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
