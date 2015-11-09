@@ -139,15 +139,18 @@
 
 (defn scrub 
   "scrubs the first and last attribute, species and gender respectivly"
-  [crabs]
-  (let [row (into [] (conj (rest crabs) (if (= (first crabs) "B") 1.0 -1.0)))]
-    (into [] (conj (pop row) (if (= (peek row) "F") 0.0 1.0)))))
+  [data]
+  (let [mid (pop (into [] (rest data)))
+        gender (if (= (peek data) "F") 0.0 1.0)
+        species (if (= (first data) "B") 1.0 -1.0)
+        row (into [] (concat [species] (conj mid gender)))]
+    row))
 
 (defn expand
   "expands the dataset for testing"
   [dataset magnitude]
   (loop [ds dataset m (- magnitude 1)]
-    (if (= m 0)
+    (if (<= m 0)
       (shuffle (shuffle ds))
       (recur (into [] (concat ds dataset)) (- m 1) ))))
 
@@ -159,18 +162,41 @@
       w
       (recur (feed data w (first lr)) (rest lr)))))
 
-(def crab (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
-(def crab1 (i/$ [:sp :index :FL :RW :CL :CW :BD :sex] crab))
-(def crab2 (i/to-vect crab1))
+(defn nifty-feeder
+  "expands and feeds a dataset, useful for finding that special rate"
+  [data magnitude lrs size]
+  (let [dt (expand data magnitude)
+        w (first (weight-gen size))
+        w2 (refeed dt w lrs)]
+     w2
+     ))
 
-(def crabv (norm-scale (mapv scrub crab2)))
-(def crabv2 (shuffle (shuffle (expand crabv 160))))
+(def crab 
+  "unchanged dataset" 
+  (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 
-(def w (first (weight-gen `(7 1))))
-(def w2 (refeed crabv2 w [0.2 0.1 0.05 0.025 0.01]))
+(def crab1 
+  "reordered dataset" 
+  (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
 
-(println (error-check crabv w2 0.5))
-(pm (error-loop 0.49 0.51 0.0001 crabv w2))
+(def crab2 
+  "vector version, reordered dataset" 
+  (i/to-vect crab1))
+
+(def crabv 
+  "scaled vector dataset" 
+  (norm-scale (mapv scrub crab2)))
+
+(def w
+  "adjusted weights for crabv with nifty-feeder"
+   (nifty-feeder crabv 100 [0.2 0.1 0.01] `(6 1)))
+
+(pm (error-loop 0.3 0.6 0.01 crabv w))
+
+(let [er (error-check crabv w 0.5)]
+  (println "Error -" er)
+  (println "Err % -" (* 100.0 (/ er 250.0))))
+
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
