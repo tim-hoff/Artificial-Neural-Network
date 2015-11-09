@@ -59,7 +59,7 @@
   [function matrix]
   (mapv #(mapv function %) matrix))
 
-(defn forward
+(defn multitiered-forward
   "takes in weights `w and inputs `x and propagates the inputs though the network"
   [input w]
   (loop [x input weights w]
@@ -68,11 +68,6 @@
       (recur 
          (mmap sigmoid (dot x (first weights))) ; first weights -> weights in this later so
          (rest weights)))))
-
-(defn ppm
-  "prints feed information"
-  [st info]
-  (println st) (pm info))
 
 (defn pluck
   "extract a value from nexted matrix"
@@ -107,6 +102,7 @@
                        (adjust-weights in w out learnrate))))))
 
 (defn feed-one 
+  "feeds a single `x` into the ANN"
   [x w]
   (let [z (pluck first (dot x w))
         yhat (sigmoid z)]
@@ -117,7 +113,7 @@
   (let [out (if (> value theta) 1.0 0.0)]
     (if (= out match) 0.0 1.0)))
 
-(defn errorcheck
+(defn error-check
   "checks error given `inputs` `weights` `threshold`"
   [input weight threshold]
   (loop [in input er 0.0]
@@ -132,6 +128,7 @@
           (+ er (find-error yhat threshold y)))))))
 
 (defn error-loop
+  "step between min and max and error-check to examine outliers."
   [mn mx step data weight ]
   (loop [m mn acc []]
     (if (>= m mx)
@@ -154,8 +151,9 @@
       (recur (into [] (concat ds dataset)) (- m 1) ))))
 
 (defn refeed 
-  [data weight lr-vect]
-  (loop [w weight lr lr-vect ]
+  "refeeds results from training at different learning rates `lrs`"
+  [data weight lrs]
+  (loop [w weight lr lrs]
     (if (empty? lr)
       w
       (recur (feed data w (first lr)) (rest lr)))))
@@ -170,7 +168,7 @@
 (def w (first (weight-gen `(7 1))))
 (def w2 (refeed crabv2 w [0.2 0.1 0.05 0.025 0.01]))
 
-(println (errorcheck crabv w2 0.5))
+(println (error-check crabv w2 0.5))
 (pm (error-loop 0.49 0.51 0.0001 crabv w2))
 
 (defn -main
