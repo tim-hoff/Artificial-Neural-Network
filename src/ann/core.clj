@@ -177,6 +177,7 @@
   "unchanged dataset" 
   (iio/read-dataset (str (io/resource "crabs.csv")) :header true))
 
+
 (def crab1 
   "reordered dataset" 
   (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
@@ -189,9 +190,13 @@
   "scaled vector dataset" 
   (norm-scale (mapv scrub crab2)))
 
+(defn cnt 
+  [] 
+  (concat (list (- (count (first crabv)) 1)) (list 1)))
+
 (def w
   "adjusted weights for crabv with nifty-feeder"
-   (nifty-feeder crabv 100 [0.2 0.1 0.01] `(6 1)))
+   (nifty-feeder crabv 100 [0.2 0.1 0.01] (cnt)))
 
 (pm (error-loop 0.3 0.6 0.01 crabv w))
 
