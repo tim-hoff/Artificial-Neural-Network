@@ -4,9 +4,8 @@
 (use 'clojure.repl) ; for doc
 (use 'criterium.core) ; benchmarking
 (use 'clojure.core.matrix) ; math
-(require '[clojure.core.matrix.operators :as mop]); matrix operations
-(set-current-implementation :vectorz); matrix computations
 (require '[clojure.java.io :as io]) ;io resources
+
 (require '[incanter.core :as i]); statistics library
 (require '[incanter.datasets :as ds]) ;  datasets, get-dataset
 (require '[incanter.excel :as xls]); excel
@@ -180,7 +179,7 @@
 
 (def crab1 
   "reordered dataset" 
-  (i/$ [:sp :FL :RW :CL :CW :BD :sex] crab))
+  (i/$ [:sp  :FL :RW :CL :CW :BD :sex] crab))
 
 (def crab2 
   "vector version, reordered dataset" 
