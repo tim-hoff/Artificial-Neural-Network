@@ -10,7 +10,7 @@ Download from https://github.com/tim-hoff/ann
 
 FIXME: explanation
 
-    $ java -jar ann-0.1.0-standalone.jar [args]
+    $ java -jar target/uberjar/ann-0.1.0-SNAPSHOT-standalone.jar
 
 ## Options
 
