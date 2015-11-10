@@ -136,12 +136,13 @@
 
 (defn error-loop
   "step between min and max and error-check to examine outliers."
-  [mn mx step data weight ]
+  [mn mx step data weight]
   (loop [m mn acc []]
     (if (> (- m step) mx)
       acc
       (recur (+ step m) 
              (conj acc [m (first (error-check data weight m))])))))
+
 
 (defn expand
   "expands the dataset for testing"
@@ -161,10 +162,11 @@
 
 (defn nifty-feeder
   "expands and feeds a dataset, useful for finding that special rate"
-  [data magnitude lrs size]
+  [data magnitude lrs size  & {:keys [verbose-flag] :or {verbose-flag false}}]
   (let [dt (expand data magnitude)
         w (first (weight-gen size))
         w2 (refeed dt w lrs)]
+    (when verbose-flag (println "Initial Weights") (pm w))
      w2))
 
 (defn scrub 
@@ -215,13 +217,15 @@
 
 (def w
   "adjusted weights for crabv with nifty-feeder"
-   (nifty-feeder crabv 200 [0.1 0.05 0.01] (cnt)))
+   (nifty-feeder crabv 200 [0.1 0.05 0.01] (cnt) :verbose-flag [true]))
+
 
 (let [ec (error-check crabv w 0.43)
       er (first ec)
       ac (last ec)]
-  
-  (println "Error -" er)
+  (println "\nFinal Weights")
+  (pm w)
+  (println "\nError -" er)
   (println "Err % -" (* 100.0 (/ er 200.0)))
   (println "\n[Result][Off By]")
   (pm ac))
