@@ -132,13 +132,13 @@
         (recur 
           (pop in)
           (+ er fr)
-          (if (= 1.0 fr) (conj acc [y yhat]) acc))))))
+          (if (= 1.0 fr) (conj acc [yhat (- threshold yhat) ]) acc))))))
 
 (defn error-loop
   "step between min and max and error-check to examine outliers."
   [mn mx step data weight ]
   (loop [m mn acc []]
-    (if (>= m mx)
+    (if (> (- m step) mx)
       acc
       (recur (+ step m) 
              (conj acc [m (first (error-check data weight m))])))))
@@ -217,16 +217,14 @@
   "adjusted weights for crabv with nifty-feeder"
    (nifty-feeder crabv 200 [0.1 0.05 0.01] (cnt)))
 
-(let [ec (error-check crabv w 0.41)
+(let [ec (error-check crabv w 0.43)
       er (first ec)
-      ac (last ec)
-      ec2 (error-check crabv w 0.5)
-      er2 (first ec2)
-      ac2 (last ec2)]
+      ac (last ec)]
   
-  (println "Error -" er "," er2 (if (< er2 er) "!!!!!!!!!!" ""))
-  (println "Err % -" (* 100.0 (/ er 200.0))))
-
+  (println "Error -" er)
+  (println "Err % -" (* 100.0 (/ er 200.0)))
+  (println "\n[Result][Off By]")
+  (pm ac))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
