@@ -13,7 +13,8 @@ You can get output for feeding the crab data (http://vincentarelbundock.github.i
     $ java -jar target/uberjar/ann-0.1.0-SNAPSHOT-standalone.jar
 
 ## Options
-
+For options and function descriptions see 
+http://tim-hoff.github.io/Artificial-Neural-Network/ann.core.html
 
 ## Examples
 If you're feeling brave enough to use the repl, you can try: 
