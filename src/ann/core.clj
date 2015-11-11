@@ -219,16 +219,17 @@
   "adjusted weights for crabv with nifty-feeder"
    (nifty-feeder crabv 200 [0.1 0.05 0.01] (cnt) :verbose-flag [true]))
 
-
-(let [ec (error-check crabv w 0.43)
+(let [threshold 0.43]
+  (println "\nTraining initialized with threshold" threshold)
+(let [ec (error-check crabv w threshold)
       er (first ec)
       ac (last ec)]
   (println "\nFinal Weights")
   (pm w)
   (println "\nError -" er)
   (println "Err % -" (* 100.0 (/ er 200.0)))
-  (println "\n[Result][Off By]")
-  (pm ac))
+  (println "\nResults with errors:\n[Result][Off By]")
+  (pm ac)))
 
 (defn -main
   "Artificial Neural Networks with stochastic gradient descent optimization"
