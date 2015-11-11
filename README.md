@@ -1,6 +1,6 @@
 # Artificial Neural Networks with stochastic gradient descent optimization
 
-Single layer neural network to predict the gender of crabs. Functions can be scaled to n-layers.
+Single layer neural network to predict the gender of crabs.
 
 ## Installation
 
