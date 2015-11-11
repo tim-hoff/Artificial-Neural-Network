@@ -22,7 +22,7 @@ If you're feeling brave enough to use the repl, you can try:
     (error-check crabv (refeed crabv2 (first (weight-gen `(7 1))) [0.2 0.1 0.05 0.025 0.01]) 0.5)
 
 ### Bugs
-None. :)
+None.
 
 ## License
 
